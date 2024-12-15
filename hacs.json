@@ -1,9 +1,7 @@
 {
   "name": "Pantry Tracker Card",
   "content_in_root": true,
-  "domains": ["lovelace"],
-  "country": "Worldwide",
-  "file_name": "pantry-card.js",
+  "filename": "pantry-card.js",
   "type": "plugin",
-  "render_readme": true
+  "hide_default_branch": false
 }
