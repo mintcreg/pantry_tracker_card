@@ -1,0 +1,8 @@
+{
+  "name": "hass-pantry-tracker-card",
+  "description": "A Home Assistant card for managing pantry items.",
+  "homeassistant": "2023.0.0",
+  "domains": ["lovelace"],
+  "file_name": "pantry-card.js",
+  "render_readme": true
+}
