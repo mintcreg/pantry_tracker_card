@@ -12,9 +12,13 @@ class PantryCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
 
-    const entities = Object.values(hass.states).filter((entity) =>
-      entity.entity_id.startsWith(this.config.entity_prefix)
-    );
+    const entities = Object.values(hass.states)
+      .filter(
+        (entity) =>
+          entity.entity_id.startsWith(this.config.entity_prefix) &&
+          entity.attributes.category !== undefined && // Exclude undefined categories
+          entity.state !== "unavailable" // Exclude unavailable sensors
+      );
 
     const entityIds = entities.map((e) => e.entity_id).join(",");
     if (this._entities !== entityIds) {
