@@ -1,0 +1,8 @@
+{
+  "name": "Pantry Card",
+  "content_in_root": false,
+  "domains": ["lovelace"],
+  "country": "Worldwide",
+  "file_name": "pantry-card.js",
+  "render_readme": true
+}
