@@ -1,0 +1,7 @@
+{
+  "name": "Pantry Tracker Card",
+  "description": "A Lovelace card for tracking pantry items.",
+  "type": "module",
+  "filename": "pantry-card.js",
+  "version": "1.0.0"
+}
