@@ -1,6 +1,6 @@
 {
   "name": "Pantry Tracker Card",
-  "content_in_root": false,
+  "content_in_root": true,
   "domains": ["lovelace"],
   "country": "Worldwide",
   "file_name": "pantry-card.js",
