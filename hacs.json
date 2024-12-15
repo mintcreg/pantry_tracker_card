@@ -4,5 +4,6 @@
   "domains": ["lovelace"],
   "country": "Worldwide",
   "file_name": "pantry-card.js",
+  "type": "plugin",
   "render_readme": true
 }
