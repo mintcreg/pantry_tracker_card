@@ -40,15 +40,19 @@ Install the [Pantry Tracker Custom Components](https://github.com/mintcreg/pantr
 
 # Installation
 
-1. Add the Pantry Tracker Card to Home Assistant through HACS or manually copy `pantry-card.js` to the `/www/` directory in your Home Assistant configuration.
+- Add the Pantry Tracker Card to Home Assistant through HACS
 
-2. Add the card to your Lovelace resources:
+***or*** 
+
+- Manually copy `pantry-card.js` to the `/www/` directory in your Home Assistant configuration.
+
+- Add the card to your Lovelace resources:
    - Navigate to **Settings** > **Dashboards** > **Resources**.
    - Add a new resource:
      - URL: `/local/pantry-card.js`
      - Resource type: `JavaScript Module`.
 
-3. Include the card in your Lovelace dashboard:
+- Include the card in your Lovelace dashboard:
    ```yaml
    type: custom:pantry-card
    entity_prefix: sensor.product_
