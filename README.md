@@ -41,12 +41,7 @@ Install the [Pantry Tracker Custom Components](https://github.com/mintcreg/pantr
 ## Screenshots & Video
 
 
- 
-![Early Preview](screenshots/Demo.gif)
-
-![App Screenshot](https://github.com/mintcreg/pantry_tracker_card/blob/main/images/#1.png?raw=true)
-
-[hello](https://github.com/mintcreg/pantry_tracker_card/blob/main/images/%231.PNG?raw=true)
+![Screenshot](https://raw.githubusercontent.com/mintcreg/pantry_tracker_card/main/images/%231.PNG)
 
 
 ---
