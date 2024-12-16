@@ -4,6 +4,9 @@
 <img src="https://github.com/mintcreg/pantry_tracker/blob/main/images/logo.webp" alt="Pantry Tracker Card Logo" width="300">
 </p>
 
+> [!CAUTION]
+> This is a work in progress and made using GPT and basic knowledge.
+
 # Description
 
 The Pantry Tracker Card is a custom Lovelace card for Home Assistant designed specifically to work with the **Pantry Tracker** add-on. It provides a sleek and user-friendly interface for tracking and managing your pantry items directly from your Home Assistant dashboard.
