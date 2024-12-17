@@ -77,7 +77,26 @@ Ensure a full restart of HomeAssistant has taken place before installing (or res
 
 Below are the available configuration options for the Pantry Tracker Lovelace card:
 
-| **Option**       | **Description**                                                      | **Type**  | **Default** | **Required** |
-|------------------|----------------------------------------------------------------------|-----------|-------------|--------------|
-| `entity_prefix`  | The prefix for your pantry product entities (e.g., `sensor.product_`). | `string`  | N/A         | **Yes**      |
-| `search`         | Adds a search bar to filter products dynamically.                   | `boolean` | `false`     | No           |
+| **Option**           | **Description**                                                                 | **Type**       | **Default** | **Required** |
+|----------------------|-------------------------------------------------------------------------------|----------------|-------------|--------------|
+| `entity_prefix`      | The prefix for your pantry product entities (e.g., `sensor.product_`).         | `string`       | N/A         | **Yes**      |
+| `search`             | Adds a search bar to filter products dynamically.                             | `boolean`      | `false`     | No           |
+| `category_filter`    | Enables a dropdown to filter products by category.                            | `boolean`      | `false`     | No           |
+| `filter_categories`  | An array of categories to exclude from the card.                              | `list(string)` | `[]`        | No           |
+| `show_images`        | Toggles whether to display product images in the card.                        | `boolean`      | `true`      | No           |
+| `empty_state_text`   | Custom text/HTML to display when no products are available.                   | `string/html`  | N/A         | No           |
+
+
+## Example Usage
+
+```yaml
+type: custom:pantry-card
+entity_prefix: sensor.product
+search: true
+empty_state_text: No products registered
+show_images: true
+category_filter: true
+filter_categories:
+  - Juice
+```
+
