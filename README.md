@@ -67,3 +67,14 @@ Install the [Pantry Tracker Custom Components](https://github.com/mintcreg/pantr
    ```yaml
    type: custom:pantry-card
    entity_prefix: sensor.product_
+   search: true
+   ```
+
+## Card Options
+
+Below are the available configuration options for the Pantry Tracker Lovelace card:
+
+| **Option**       | **Description**                                                      | **Type**  | **Default** | **Required** |
+|------------------|----------------------------------------------------------------------|-----------|-------------|--------------|
+| `entity_prefix`  | The prefix for your pantry product entities (e.g., `sensor.product_`). | `string`  | N/A         | **Yes**      |
+| `search`         | Adds a search bar to filter products dynamically.                   | `boolean` | `false`     | No           |
