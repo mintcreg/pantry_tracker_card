@@ -39,7 +39,7 @@ Ensure that the [Pantry Tracker Add-on](https://github.com/mintcreg/pantry_track
 2. **Custom Components for Pantry Tracker**  
 Install the [Pantry Tracker Custom Components](https://github.com/mintcreg/pantry_tracker_components).
 
-3. **Restart HomeAssistant**
+4. **Restart HomeAssistant**
 Ensure a full restart of HomeAssistant has taken place before installing (or restart after installing)
 
 ---
@@ -55,6 +55,8 @@ Ensure a full restart of HomeAssistant has taken place before installing (or res
 # Installation
 
 - Add the Pantry Tracker Card to Home Assistant through HACS
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=pantry_tracker_card&category=Dashboard&owner=mintcreg)
 
 ***or*** 
 
