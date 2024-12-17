@@ -7,11 +7,13 @@ class PantryCard extends HTMLElement {
     this.config = config;
     this.attachShadow({ mode: "open" });
     this._entities = [];
+    this._originalEntities = [];
+    this.searchTerm = "";
+    this.hasRenderedInitially = false;
   }
 
   set hass(hass) {
     this._hass = hass;
-
     const entities = Object.values(hass.states)
       .filter(
         (entity) =>
@@ -23,62 +25,35 @@ class PantryCard extends HTMLElement {
     const entityIds = entities.map((e) => e.entity_id).join(",");
     if (this._entities !== entityIds) {
       this._entities = entityIds;
-      this.render(entities);
+      this._originalEntities = entities;
+      this.updateView();
     }
   }
 
-  render(entities) {
-    if (entities.length === 0) {
-      this.shadowRoot.innerHTML = `
-        <style>
-          .error {
-            color: red;
-            text-align: center;
-          }
-        </style>
-        <div class="error">No products found.</div>
-      `;
-      return;
+  filterEntities() {
+    if (!this.searchTerm || this.searchTerm.trim() === "") {
+      return this._originalEntities;
     }
+    const search = this.searchTerm.trim().toLowerCase();
+    return this._originalEntities.filter((e) =>
+      (e.attributes.product_name || e.entity_id).toLowerCase().includes(search)
+    );
+  }
 
-    const categories = [...new Set(entities.map((e) => e.attributes.category))];
-    const cardHtml = categories
-      .map((category) => {
-        const products = entities.filter(
-          (e) => e.attributes.category === category
-        );
-        return `
-          <div class="category">
-            <h2>${category}</h2>
-            ${products
-              .map(
-                (product) => `
-              <div class="product">
-                <span class="product-name">${
-                  product.attributes.product_name || product.entity_id
-                }</span>
-                <img src="${
-                  product.attributes.url || ""
-                }" alt="No Image" class="product-image" />
-                <span class="product-count" data-entity="${
-                  product.entity_id
-                }">${product.state}</span>
-                <button class="decrease" data-entity="${
-                  product.entity_id
-                }">-</button>
-                <button class="increase" data-entity="${
-                  product.entity_id
-                }">+</button>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        `;
-      })
-      .join("");
+  updateView() {
+    if (!this.hasRenderedInitially) {
+      // Initial render of the structure, including search container if needed
+      this.renderBaseStructure();
+      this.hasRenderedInitially = true;
+    }
+    // Re-render just the categories container
+    const entities = this.filterEntities();
+    this.renderCategories(entities);
+  }
 
-    this.shadowRoot.innerHTML = `
+  renderBaseStructure() {
+    // This sets up the initial HTML structure without losing focus on subsequent updates
+    const style = `
       <style>
         .category {
           margin-bottom: 20px;
@@ -135,33 +110,132 @@ class PantryCard extends HTMLElement {
         button.increase:hover {
           background-color: #19692c;
         }
+
+        .search-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 20px;
+          gap: 10px;
+        }
+        .search-input {
+          padding: 8px;
+          font-size: 16px;
+          border-radius: 5px;
+          border: 1px solid #ccc;
+          width: 70%;
+        }
+        .reset-button {
+          background-color: #6c757d;
+          border: none;
+          border-radius: 5px;
+          padding: 8px 15px;
+          color: #fff;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+        }
+        .reset-button:hover {
+          background-color: #5a6268;
+        }
+
+        .error {
+          color: red;
+          text-align: center;
+        }
       </style>
-      ${cardHtml}
     `;
 
-    this.shadowRoot
-      .querySelectorAll(".increase")
-      .forEach((button) =>
-        button.addEventListener("click", (e) =>
-          this.handleButtonClick(
-            "pantry_tracker.increase_count",
-            e.target.dataset.entity,
-            1
-          )
-        )
-      );
+    let searchHtml = "";
+    if (this.config.search) {
+      searchHtml = `
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Search products..." />
+          <button class="reset-button">Reset</button>
+        </div>
+      `;
+    }
 
-    this.shadowRoot
-      .querySelectorAll(".decrease")
-      .forEach((button) =>
-        button.addEventListener("click", (e) =>
-          this.handleButtonClick(
-            "pantry_tracker.decrease_count",
-            e.target.dataset.entity,
-            -1
-          )
-        )
-      );
+    const baseHtml = `
+      ${style}
+      ${searchHtml}
+      <div class="categories-container"></div>
+    `;
+
+    this.shadowRoot.innerHTML = baseHtml;
+
+    if (this.config.search) {
+      const searchInput = this.shadowRoot.querySelector(".search-input");
+      const resetButton = this.shadowRoot.querySelector(".reset-button");
+
+      // Restore previously typed search term
+      searchInput.value = this.searchTerm;
+
+      // Filter as user types without re-rendering the entire structure
+      searchInput.addEventListener("input", () => {
+        this.searchTerm = searchInput.value;
+        this.updateView(); // re-renders categories only
+      });
+
+      resetButton.addEventListener("click", () => {
+        this.searchTerm = "";
+        searchInput.value = "";
+        this.updateView();
+      });
+    }
+  }
+
+  renderCategories(entities) {
+    const container = this.shadowRoot.querySelector(".categories-container");
+
+    if (!entities || entities.length === 0) {
+      container.innerHTML = `<div class="error">No products found.</div>`;
+      return;
+    }
+
+    const categories = [...new Set(entities.map((e) => e.attributes.category))];
+
+    const cardHtml = categories
+      .map((category) => {
+        const products = entities.filter((e) => e.attributes.category === category);
+        if (products.length === 0) return "";
+        return `
+          <div class="category">
+            <h2>${category}</h2>
+            ${products
+              .map(
+                (product) => `
+              <div class="product">
+                <span class="product-name">
+                  ${product.attributes.product_name || product.entity_id}
+                </span>
+                <img src="${product.attributes.url || ""}" alt="No Image" class="product-image" />
+                <span class="product-count" data-entity="${product.entity_id}">${product.state}</span>
+                <button class="decrease" data-entity="${product.entity_id}">-</button>
+                <button class="increase" data-entity="${product.entity_id}">+</button>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+        `;
+      })
+      .join("");
+
+    container.innerHTML = cardHtml;
+
+    // Add event listeners to increase/decrease buttons
+    container.querySelectorAll(".increase").forEach((button) =>
+      button.addEventListener("click", (e) =>
+        this.handleButtonClick("pantry_tracker.increase_count", e.target.dataset.entity, 1)
+      )
+    );
+
+    container.querySelectorAll(".decrease").forEach((button) =>
+      button.addEventListener("click", (e) =>
+        this.handleButtonClick("pantry_tracker.decrease_count", e.target.dataset.entity, -1)
+      )
+    );
   }
 
   handleButtonClick(service, entityId, delta) {
