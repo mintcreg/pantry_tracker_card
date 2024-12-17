@@ -187,9 +187,34 @@ class PantryCard extends HTMLElement {
 
   renderCategories(entities) {
     const container = this.shadowRoot.querySelector(".categories-container");
+    if (!container) return;
 
     if (!entities || entities.length === 0) {
-      container.innerHTML = `<div class="error">No products found.</div>`;
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="emoji">🤷</span>
+          <div class="empty-message">No products found. Try adding some products or adjust your search/sorting.</div>
+        </div>
+      `;
+
+      const style = `
+        <style>
+          .empty-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: red;
+            font-weight: bold;
+            font-size: 1.2em;
+            gap: 10px;
+          }
+          .empty-state .emoji {
+            font-size: 1.5em;
+          }
+        </style>
+      `;
+      container.insertAdjacentHTML("beforeend", style);
       return;
     }
 
