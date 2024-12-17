@@ -91,12 +91,15 @@ Below are the available configuration options for the Pantry Tracker Lovelace ca
 
 ```yaml
 type: custom:pantry-card
-entity_prefix: sensor.product
+entity_prefix: sensor.product_
 search: true
-empty_state_text: No products registered
-show_images: true
 category_filter: true
 filter_categories:
-  - Juice
+  - Water
+  - Snacks
+show_images: true
+empty_state_text: >
+  <p style="color: red; font-weight: bold;">No products found!</p>
+
 ```
 
