@@ -10,6 +10,12 @@ class PantryCard extends HTMLElement {
     this._originalEntities = [];
     this.searchTerm = "";
     this.hasRenderedInitially = false;
+
+    this.categoryFilterEnabled = (config.category_filter === true);
+    this.selectedCategory = "all";
+
+    // Store filter_categories if provided
+    this.filteredCategories = Array.isArray(config.filter_categories) ? config.filter_categories : [];
   }
 
   set hass(hass) {
@@ -18,8 +24,8 @@ class PantryCard extends HTMLElement {
       .filter(
         (entity) =>
           entity.entity_id.startsWith(this.config.entity_prefix) &&
-          entity.attributes.category !== undefined && // Exclude undefined categories
-          entity.state !== "unavailable" // Exclude unavailable sensors
+          entity.attributes.category !== undefined &&
+          entity.state !== "unavailable"
       );
 
     const entityIds = entities.map((e) => e.entity_id).join(",");
@@ -31,28 +37,41 @@ class PantryCard extends HTMLElement {
   }
 
   filterEntities() {
-    if (!this.searchTerm || this.searchTerm.trim() === "") {
-      return this._originalEntities;
+    let filtered = this._originalEntities;
+
+    // Exclude categories listed in filter_categories
+    if (this.filteredCategories.length > 0) {
+      filtered = filtered.filter((e) => !this.filteredCategories.includes(e.attributes.category));
     }
-    const search = this.searchTerm.trim().toLowerCase();
-    return this._originalEntities.filter((e) =>
-      (e.attributes.product_name || e.entity_id).toLowerCase().includes(search)
-    );
+
+    // Search filter
+    if (this.searchTerm && this.searchTerm.trim() !== "") {
+      const search = this.searchTerm.trim().toLowerCase();
+      filtered = filtered.filter((e) =>
+        (e.attributes.product_name || e.entity_id).toLowerCase().includes(search)
+      );
+    }
+
+    // Category filter (dropdown)
+    if (this.categoryFilterEnabled && this.selectedCategory !== "all") {
+      filtered = filtered.filter(
+        (e) => e.attributes.category && e.attributes.category === this.selectedCategory
+      );
+    }
+
+    return filtered;
   }
 
   updateView() {
     if (!this.hasRenderedInitially) {
-      // Initial render of the structure, including search container if needed
       this.renderBaseStructure();
       this.hasRenderedInitially = true;
     }
-    // Re-render just the categories container
     const entities = this.filterEntities();
     this.renderCategories(entities);
   }
 
   renderBaseStructure() {
-    // This sets up the initial HTML structure without losing focus on subsequent updates
     const style = `
       <style>
         .category {
@@ -111,13 +130,14 @@ class PantryCard extends HTMLElement {
           background-color: #19692c;
         }
 
-        .search-container {
+        .search-container, .filter-container {
           display: flex;
           justify-content: center;
           align-items: center;
           margin-bottom: 20px;
           gap: 10px;
         }
+
         .search-input {
           padding: 8px;
           font-size: 16px;
@@ -139,6 +159,14 @@ class PantryCard extends HTMLElement {
           background-color: #5a6268;
         }
 
+        .category-dropdown {
+          padding: 8px;
+          font-size: 16px;
+          border-radius: 5px;
+          border: 1px solid #ccc;
+          background-color: #fff;
+        }
+
         .error {
           color: red;
           text-align: center;
@@ -157,6 +185,14 @@ class PantryCard extends HTMLElement {
         .empty-state .emoji {
           font-size: 1.5em;
         }
+
+        .product-placeholder {
+          text-align: center;
+          font-size: 1em;
+          color: #6c757d;
+          margin: 10px 0;
+          font-style: italic;
+        }
       </style>
     `;
 
@@ -170,25 +206,30 @@ class PantryCard extends HTMLElement {
       `;
     }
 
+    let filterHtml = "";
+    if (this.categoryFilterEnabled) {
+      filterHtml = `<div class="filter-container"><select class="category-dropdown"></select></div>`;
+    }
+
     const baseHtml = `
       ${style}
       ${searchHtml}
+      ${filterHtml}
       <div class="categories-container"></div>
     `;
 
     this.shadowRoot.innerHTML = baseHtml;
 
+    // Setup search events
     if (this.config.search) {
       const searchInput = this.shadowRoot.querySelector(".search-input");
       const resetButton = this.shadowRoot.querySelector(".reset-button");
 
-      // Restore previously typed search term
       searchInput.value = this.searchTerm;
 
-      // Filter as user types without re-rendering the entire structure
       searchInput.addEventListener("input", () => {
         this.searchTerm = searchInput.value;
-        this.updateView(); // re-renders categories only
+        this.updateView();
       });
 
       resetButton.addEventListener("click", () => {
@@ -203,56 +244,111 @@ class PantryCard extends HTMLElement {
     const container = this.shadowRoot.querySelector(".categories-container");
     if (!container) return;
 
+    // Determine all categories from original entities
+    let allCategories = [...new Set(this._originalEntities.map((e) => e.attributes.category))];
+
+    // Filter out categories listed in filter_categories from allCategories as well
+    if (this.filteredCategories.length > 0) {
+      allCategories = allCategories.filter(cat => !this.filteredCategories.includes(cat));
+    }
+
+    // Populate dropdown if category_filter enabled
+    if (this.categoryFilterEnabled) {
+      const dropdown = this.shadowRoot.querySelector(".category-dropdown");
+      if (dropdown) {
+        dropdown.innerHTML = `<option value="all">All Categories</option>`;
+        allCategories.forEach(cat => {
+          const selected = this.selectedCategory === cat ? "selected" : "";
+          dropdown.insertAdjacentHTML("beforeend", `<option value="${cat}" ${selected}>${cat}</option>`);
+        });
+
+        if (!this.dropdownListenerAttached) {
+          dropdown.addEventListener("change", (e) => {
+            this.selectedCategory = e.target.value;
+            this.updateView();
+          });
+          this.dropdownListenerAttached = true;
+        }
+      }
+    }
+
+    // If no entities match (after filtering)
     if (!entities || entities.length === 0) {
-      // Check if user provided empty_state_text
-      const emptyStateText = this.config.empty_state_text;
-      if (emptyStateText) {
+      // If searching, show "No results found"
+      if (this.searchTerm.trim() !== "") {
         container.innerHTML = `
           <div class="empty-state">
-            ${emptyStateText}
+            <div>No results found</div>
           </div>
         `;
       } else {
-        // Default empty state if none provided
-        container.innerHTML = `
-          <div class="empty-state">
-            <span class="emoji">🤷</span>
-            <div class="empty-message">No products found. Try adding some products or adjust your search/sorting.</div>
-          </div>
-        `;
+        // No search term, show empty state or default
+        const emptyStateText = this.config.empty_state_text;
+        if (emptyStateText) {
+          container.innerHTML = `
+            <div class="empty-state">
+              ${emptyStateText}
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <span class="emoji">🤷</span>
+              <div class="empty-message">No products found. Try adding some products or adjust your search/sorting.</div>
+            </div>
+          `;
+        }
       }
       return;
     }
 
-    const categories = [...new Set(entities.map((e) => e.attributes.category))];
+    const showImages = this.config.show_images !== false;
+    const isSearching = this.searchTerm.trim() !== "";
 
-    const showImages = this.config.show_images !== false; // Default true if not specified
+    // Determine which categories to render
+    // If filtering by category, only show that category
+    const categoriesToRender =
+      this.categoryFilterEnabled && this.selectedCategory !== "all"
+        ? [this.selectedCategory]
+        : allCategories;
 
-    const cardHtml = categories
+    const cardHtml = categoriesToRender
       .map((category) => {
         const products = entities.filter((e) => e.attributes.category === category);
-        if (products.length === 0) return "";
+
+        // If searching and no products, skip category
+        if (isSearching && products.length === 0) {
+          return "";
+        }
+
+        // If no products, skip category (no show_empty_categories logic needed now)
+        if (products.length === 0) {
+          return "";
+        }
+
+        const productsHtml = products
+          .map((product) => {
+            const productName = product.attributes.product_name || product.entity_id;
+            const productCount = product.state;
+            const imageTag = showImages
+              ? `<img src="${product.attributes.url || ""}" alt="No Image" class="product-image" />`
+              : "";
+            return `
+              <div class="product">
+                <span class="product-name">${productName}</span>
+                ${imageTag}
+                <span class="product-count" data-entity="${product.entity_id}">${productCount}</span>
+                <button class="decrease" data-entity="${product.entity_id}">-</button>
+                <button class="increase" data-entity="${product.entity_id}">+</button>
+              </div>
+            `;
+          })
+          .join("");
+
         return `
           <div class="category">
             <h2>${category}</h2>
-            ${products
-              .map((product) => {
-                const productName = product.attributes.product_name || product.entity_id;
-                const productCount = product.state;
-                const imageTag = showImages
-                  ? `<img src="${product.attributes.url || ""}" alt="No Image" class="product-image" />`
-                  : "";
-                return `
-                  <div class="product">
-                    <span class="product-name">${productName}</span>
-                    ${imageTag}
-                    <span class="product-count" data-entity="${product.entity_id}">${productCount}</span>
-                    <button class="decrease" data-entity="${product.entity_id}">-</button>
-                    <button class="increase" data-entity="${product.entity_id}">+</button>
-                  </div>
-                `;
-              })
-              .join("")}
+            ${productsHtml}
           </div>
         `;
       })
