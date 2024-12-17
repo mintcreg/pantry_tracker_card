@@ -39,6 +39,9 @@ Ensure that the [Pantry Tracker Add-on](https://github.com/mintcreg/pantry_track
 2. **Custom Components for Pantry Tracker**  
 Install the [Pantry Tracker Custom Components](https://github.com/mintcreg/pantry_tracker_components).
 
+3. **Restart HomeAssistant**
+Ensure a full restart of HomeAssistant has taken place before installing (or restart after installing)
+
 ---
 
 ## Screenshots
